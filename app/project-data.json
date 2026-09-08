@@ -1,0 +1,46 @@
+{
+  "projects": [
+    {
+      "name": "Atlas Onboarding",
+      "owner": "Maya Chen",
+      "status": "On track",
+      "recentActivity": "New self-serve workspace flow is ready for internal review.",
+      "priority": "High priority"
+    },
+    {
+      "name": "Northstar Analytics",
+      "owner": "Jordan Ellis",
+      "status": "Needs attention",
+      "recentActivity": "Data quality review found two source mappings to resolve this week.",
+      "priority": "At risk"
+    },
+    {
+      "name": "Horizon Mobile",
+      "owner": "Priya Shah",
+      "status": "In progress",
+      "recentActivity": "The beta build is with pilot users; feedback synthesis starts Friday.",
+      "priority": "Medium priority"
+    },
+    {
+      "name": "Signal Design System",
+      "owner": "Alex Morgan",
+      "status": "Planning",
+      "recentActivity": "Component inventory is complete and the next release scope is being shaped.",
+      "priority": "Low priority"
+    },
+    {
+      "name": "Beacon Reliability",
+      "owner": "Sam Rivera",
+      "status": "On track",
+      "recentActivity": "Error budget dashboard shipped with alert thresholds enabled.",
+      "priority": "High priority"
+    },
+    {
+      "name": "Cedar Billing",
+      "owner": "Taylor Brooks",
+      "status": "Blocked",
+      "recentActivity": "Waiting on the vendor sandbox credentials before integration testing can resume.",
+      "priority": "Critical risk"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A calm, at-a-glance view of current project health and activity.">
+  <title>Project Pulse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="index.html" aria-label="Project Pulse home">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span>Project Pulse</span>
+      </a>
+      <span class="site-header__context">Operations overview</span>
+    </div>
+  </header>
+
+  <main id="main-content" class="dashboard">
+    <section class="dashboard-intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Team workspace</p>
+        <h1 id="page-title">Project Pulse</h1>
+        <p class="dashboard-intro__copy">A clear view of what is moving, what needs attention, and where the team is focused.</p>
+      </div>
+      <div class="dashboard-summary" aria-label="Project summary">
+        <span class="dashboard-summary__label">Tracked projects</span>
+        <strong id="project-count" class="dashboard-summary__value">—</strong>
+      </div>
+    </section>
+
+    <section class="project-section" aria-labelledby="projects-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Live snapshot</p>
+          <h2 id="projects-heading">Current projects</h2>
+        </div>
+        <p class="section-heading__hint">Status and priority are updated from the project register.</p>
+      </div>
+
+      <div id="loading-state" class="loading-state" role="status" aria-live="polite">
+        <span class="loading-state__indicator" aria-hidden="true"></span>
+        Loading project updates…
+      </div>
+      <div id="error-state" class="error-state" role="alert" hidden></div>
+      <div id="project-grid" class="project-grid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Project Pulse <span aria-hidden="true">·</span> A shared view for better team decisions</p>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var projectGrid = document.getElementById("project-grid");
+      var loadingState = document.getElementById("loading-state");
+      var errorState = document.getElementById("error-state");
+      var projectCount = document.getElementById("project-count");
+      var requiredFields = ["name", "owner", "status", "recentActivity", "priority"];
+
+      function text(value) {
+        return document.createTextNode(String(value));
+      }
+
+      function createLabeledValue(label, value, className) {
+        var item = document.createElement("div");
+        item.className = "project-card__meta-item";
+
+        var labelElement = document.createElement("dt");
+        labelElement.className = "project-card__label";
+        labelElement.appendChild(text(label));
+
+        var valueElement = document.createElement("dd");
+        valueElement.className = className || "project-card__value";
+        valueElement.appendChild(text(value));
+
+        item.appendChild(labelElement);
+        item.appendChild(valueElement);
+        return item;
+      }
+
+      function createBadge(value, type) {
+        var badge = document.createElement("span");
+        badge.className = type + "-badge";
+        badge.appendChild(text(value));
+        return badge;
+      }
+
+      function createProjectCard(project) {
+        var article = document.createElement("article");
+        article.className = "project-card";
+
+        var header = document.createElement("header");
+        header.className = "project-card__header";
+
+        var title = document.createElement("h3");
+        title.className = "project-card__title";
+        title.appendChild(text(project.name));
+
+        var owner = document.createElement("p");
+        owner.className = "project-card__owner";
+        owner.appendChild(text("Owned by " + project.owner));
+
+        header.appendChild(title);
+        header.appendChild(owner);
+
+        var statusRow = document.createElement("div");
+        statusRow.className = "project-card__badges";
+        statusRow.appendChild(createBadge(project.status, "status"));
+        statusRow.appendChild(createBadge(project.priority, "priority"));
+
+        var summary = document.createElement("p");
+        summary.className = "project-card__summary";
+        summary.appendChild(text("Current project health and delivery focus."));
+
+        var activity = document.createElement("div");
+        activity.className = "activity";
+        var activityLabel = document.createElement("span");
+        activityLabel.className = "activity__label";
+        activityLabel.appendChild(text("Recent activity"));
+        var activityValue = document.createElement("p");
+        activityValue.className = "activity__value";
+        activityValue.appendChild(text(project.recentActivity));
+        activity.appendChild(activityLabel);
+        activity.appendChild(activityValue);
+
+        var meta = document.createElement("dl");
+        meta.className = "project-card__meta";
+        meta.appendChild(createLabeledValue("Owner", project.owner));
+        meta.appendChild(createLabeledValue("Status", project.status, "project-card__value project-card__value--status"));
+        meta.appendChild(createLabeledValue("Priority / risk", project.priority, "project-card__value project-card__value--priority"));
+
+        article.appendChild(header);
+        article.appendChild(statusRow);
+        article.appendChild(summary);
+        article.appendChild(activity);
+        article.appendChild(meta);
+        return article;
+      }
+
+      function validateProjects(data) {
+        if (!data || !Array.isArray(data.projects)) {
+          throw new Error("The project data must contain a top-level projects array.");
+        }
+        data.projects.forEach(function (project, index) {
+          var missing = requiredFields.filter(function (field) {
+            return typeof project[field] !== "string" || !project[field].trim();
+          });
+          if (missing.length) {
+            throw new Error("Project " + (index + 1) + " is missing: " + missing.join(", ") + ".");
+          }
+        });
+        return data.projects;
+      }
+
+      function showError(error) {
+        loadingState.hidden = true;
+        projectGrid.replaceChildren();
+        projectCount.textContent = "—";
+        errorState.textContent = "Unable to load project updates. " + error.message;
+        errorState.hidden = false;
+      }
+
+      fetch("project-data.json")
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("The data file returned HTTP " + response.status + ".");
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          var projects = validateProjects(data);
+          projectGrid.replaceChildren.apply(projectGrid, projects.map(createProjectCard));
+          projectCount.textContent = String(projects.length);
+          loadingState.hidden = true;
+          errorState.hidden = true;
+        })
+        .catch(showError);
+    }());
+  </script>
+</body>
+</html>
